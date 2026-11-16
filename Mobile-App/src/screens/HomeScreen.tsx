@@ -8,7 +8,9 @@ import {
   ChevronRight, 
   ShieldCheck, 
   Info,
-  MousePointer
+  MousePointer,
+  Download,
+  ArrowDownToLine
 } from 'lucide-react';
 
 export type ScreenTarget = 
@@ -43,6 +45,34 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
           </div>
         </div>
       </header>
+
+      {/* Android APK Download Banner for Method 2 (Direct Bluetooth HID) */}
+      <a
+        href="/stouch.apk"
+        download="stouch.apk"
+        className="flex items-center justify-between p-3.5 rounded-2xl bg-gradient-to-r from-emerald-600/30 via-teal-600/30 to-cyan-600/30 border border-emerald-500/40 hover:border-emerald-400 text-left transition active:scale-[0.99] group shadow-lg mb-5"
+      >
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500 text-white shadow-md shadow-emerald-500/30 group-hover:scale-105 transition">
+            <Download className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center space-x-2">
+              <span className="text-xs sm:text-sm font-bold text-white">Download Android App (APK)</span>
+              <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded bg-emerald-500/30 text-emerald-300 border border-emerald-400/50">
+                Direct BT HID
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 mt-0.5">
+              Install APK on phone for direct Bluetooth mouse & keyboard mode
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1 text-xs font-bold text-emerald-400 pl-2">
+          <span className="hidden sm:inline">4.2MB</span>
+          <ArrowDownToLine className="w-4 h-4" />
+        </div>
+      </a>
 
       {/* Target Category Cards */}
       <div className="space-y-4 flex-1">

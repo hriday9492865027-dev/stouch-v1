@@ -66,7 +66,7 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    override fun requestPermissions(call: PluginCall) {
         val missing = capabilityDetector.getMissingPermissions()
         if (missing.isEmpty()) {
             val ret = JSObject()
