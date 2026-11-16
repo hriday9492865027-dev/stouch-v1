@@ -29,10 +29,7 @@ export interface BluetoothHIDPluginInterface {
 }
 
 // In-memory simulator state for browser preview & testing
-const simulatedHosts: PairedHost[] = [
-  { id: 'FC:F8:AE:34:12:01', name: 'Work-Station-Win11', isConnected: false },
-  { id: 'B0:7D:64:99:A5:42', name: 'MacBook-Pro-M2', isConnected: false }
-];
+const simulatedHosts: PairedHost[] = [];
 
 export const BluetoothHID = registerPlugin<BluetoothHIDPluginInterface>('BluetoothHID', {
   web: () => ({

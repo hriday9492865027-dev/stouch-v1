@@ -317,11 +317,14 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
           <div className="flex-1 flex flex-col items-center justify-center p-6 rounded-2xl border border-dashed border-slate-800 text-center">
             <Laptop className="w-8 h-8 text-slate-600 mb-2" />
             <p className="text-xs font-semibold text-slate-300">No paired PC found yet</p>
-            <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+            <p className="text-[11px] text-slate-500 mt-1 max-w-xs leading-relaxed">
               1. Tap <strong>Make Discoverable</strong> above.<br />
               2. Open <strong>Bluetooth Settings</strong> on your PC.<br />
-              3. Pair with <strong>STouch</strong>.
+              3. Pair with <strong>STouch</strong>.<br />
             </p>
+            <div className="mt-4 p-3 rounded-xl bg-slate-950/80 border border-slate-800/80 text-[11px] text-slate-400 max-w-xs text-left leading-relaxed">
+              💡 <strong>Note on Web vs Phone:</strong> Web browsers cannot broadcast hardware Bluetooth HID profiles. For live PC control from this browser, use <strong>Local Wi-Fi Mode</strong>. For direct Bluetooth without PC software, install the Android APK on your phone.
+            </div>
           </div>
         ) : (
           <div className="space-y-2 overflow-y-auto max-h-56">

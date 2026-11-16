@@ -674,51 +674,57 @@ export const TouchpadDeck: React.FC<TouchpadDeckProps> = ({ onBack, connectionMo
             </div>
 
             <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setIsConnected(true);
-                  setHostName('Work-Station-Win11');
-                  setLatencyMs(11);
-                  setShowConnectModal(false);
-                  showNotification('Connected to Work-Station-Win11');
-                }}
-                className="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left flex items-center justify-between transition"
-              >
-                <div>
-                  <div className="text-xs font-bold text-white">Work-Station-Win11</div>
-                  <div className="text-[10px] text-slate-400 font-mono">FC:F8:AE:34:12:01 (Bluetooth HID)</div>
+              <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300">
+                <div className="font-semibold text-white mb-1 flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400" />
+                  <span>Connection Mode</span>
                 </div>
-                <span className="text-xs font-bold text-cyan-400">Connect</span>
-              </button>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  In a web browser, connect via <strong>Local Wi-Fi Mode</strong> (Desktop Receiver). On Android phone, direct <strong>Bluetooth HID</strong> connects in phone Bluetooth settings.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-400 mb-1">
+                  Connected Device Display Name
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={hostName}
+                    onChange={(e) => setHostName(e.target.value)}
+                    placeholder="e.g. My-Windows-PC"
+                    className="flex-1 px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none focus:border-cyan-500 font-mono"
+                  />
+                  <button
+                    onClick={() => {
+                      setIsConnected(true);
+                      setShowConnectModal(false);
+                      showNotification(`Connected as ${hostName}`);
+                    }}
+                    className="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition"
+                  >
+                    Set
+                  </button>
+                </div>
+              </div>
 
               <button
                 onClick={() => {
-                  setIsConnected(true);
-                  setHostName('MacBook-Pro-M2');
-                  setLatencyMs(9);
+                  const nextState = !isConnected;
+                  setIsConnected(nextState);
+                  setLatencyMs(nextState ? 12 : null);
                   setShowConnectModal(false);
-                  showNotification('Connected to MacBook-Pro-M2');
+                  showNotification(nextState ? `Connected to ${hostName}` : 'Disconnected');
                 }}
-                className="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700/80 border border-slate-700 text-left flex items-center justify-between transition"
-              >
-                <div>
-                  <div className="text-xs font-bold text-white">MacBook-Pro-M2</div>
-                  <div className="text-[10px] text-slate-400 font-mono">B0:7D:64:99:A5:42 (Bluetooth HID)</div>
-                </div>
-                <span className="text-xs font-bold text-cyan-400">Connect</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsConnected(false);
-                  setLatencyMs(null);
-                  setShowConnectModal(false);
-                  showNotification('Disconnected');
-                }}
-                className="w-full p-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-bold flex items-center justify-center space-x-2 transition"
+                className={`w-full p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center space-x-2 transition ${
+                  isConnected 
+                    ? 'bg-rose-500/10 hover:bg-rose-500/20 border-rose-500/30 text-rose-400' 
+                    : 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-400'
+                }`}
               >
                 <Unplug className="w-4 h-4" />
-                <span>Disconnect Current Host</span>
+                <span>{isConnected ? 'Disconnect Controller' : 'Connect Controller'}</span>
               </button>
             </div>
           </div>
