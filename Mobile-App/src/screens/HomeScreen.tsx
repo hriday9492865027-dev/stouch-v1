@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 export type ScreenTarget = 
+  | 'touchpad-deck'
   | 'pc-bluetooth' 
   | 'pc-wifi' 
   | 'smartboard-bluetooth' 
@@ -66,7 +67,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
           <div className="grid grid-cols-1 gap-2">
             {/* Direct Touchpad Surface Launcher */}
             <button
-              onClick={() => onSelectCategory('pc-bluetooth')}
+              onClick={() => onSelectCategory('touchpad-deck')}
               className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-cyan-950/60 to-blue-950/60 hover:from-cyan-900/50 hover:to-blue-900/50 border border-cyan-500/40 text-left transition active:scale-[0.99] group shadow-md"
             >
               <div className="flex items-center space-x-3">

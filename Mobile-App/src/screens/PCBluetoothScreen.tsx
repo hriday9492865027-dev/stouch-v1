@@ -5,36 +5,17 @@ import {
   CheckCircle2, 
   RefreshCw, 
   ShieldAlert, 
-  Keyboard as KeyboardIcon,
-  Sliders,
-  Unplug,
-  Radio,
-  Laptop,
-  MousePointer
+  Radio, 
+  Laptop, 
+  MousePointer 
 } from 'lucide-react';
 import { BluetoothHID } from '@shared/services/BluetoothHIDService';
 import type { DeviceCapabilityResult, PairedHost, ConnectionState } from '@shared/input-models/CapabilityState';
-import type { GestureConfig } from '@shared/gestures/TouchpadGestureEngine';
-import { TouchpadSurface } from '../components/TouchpadSurface';
-import { MouseButtonsBar } from '../components/MouseButtonsBar';
-import { VirtualKeyboard } from '../components/VirtualKeyboard';
-import { TouchpadSettingsModal } from '../components/TouchpadSettingsModal';
+import { TouchpadDeck } from '../components/TouchpadDeck';
 
 interface PCBluetoothScreenProps {
   onBack: () => void;
 }
-
-const DEFAULT_GESTURE_CONFIG: GestureConfig = {
-  sensitivity: 1.3,
-  scrollSensitivity: 0.8,
-  naturalScroll: true,
-  tapToClickEnabled: true,
-  pointerAcceleration: true,
-  tapTimeoutMs: 180,
-  doubleTapTimeoutMs: 280,
-  dragHoldTimeoutMs: 320,
-  moveThresholdPx: 5,
-};
 
 export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) => {
   // Capability State
@@ -49,25 +30,7 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
   const [connectedHost, setConnectedHost] = useState<PairedHost | null>(null);
   const [discoverableSeconds, setDiscoverableSeconds] = useState<number>(0);
 
-  // Active UI Controls & Modals
-  const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
-
-  // User Preferences
-  const [gestureConfig, setGestureConfig] = useState<GestureConfig>(() => {
-    try {
-      const saved = localStorage.getItem('stouch_gesture_config');
-      return saved ? { ...DEFAULT_GESTURE_CONFIG, ...JSON.parse(saved) } : DEFAULT_GESTURE_CONFIG;
-    } catch {
-      return DEFAULT_GESTURE_CONFIG;
-    }
-  });
-
-  const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('stouch_haptics') !== 'false';
-  });
-
-  const [keepAwake, setKeepAwake] = useState<boolean>(() => {
+  const [keepAwake] = useState<boolean>(() => {
     return localStorage.getItem('stouch_keep_awake') === 'true';
   });
 
@@ -98,26 +61,6 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
       }
     };
   }, [keepAwake, connectionState]);
-
-  const handleUpdateConfig = (partial: Partial<GestureConfig>) => {
-    setGestureConfig((prev) => {
-      const updated = { ...prev, ...partial };
-      try {
-        localStorage.setItem('stouch_gesture_config', JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-  };
-
-  const handleToggleHaptics = (enabled: boolean) => {
-    setHapticsEnabled(enabled);
-    localStorage.setItem('stouch_haptics', enabled ? 'true' : 'false');
-  };
-
-  const handleToggleKeepAwake = (enabled: boolean) => {
-    setKeepAwake(enabled);
-    localStorage.setItem('stouch_keep_awake', enabled ? 'true' : 'false');
-  };
 
   const checkCapability = async () => {
     setLoading(true);
@@ -257,74 +200,10 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
   // --- Render Connected Control Surface ---
   if (connectionState === 'connected' && connectedHost) {
     return (
-      <div className="flex flex-col flex-1 h-screen max-w-lg mx-auto w-full p-3 select-none">
-        {/* Connected Top Bar */}
-        <div className="flex items-center justify-between py-2 border-b border-slate-800/80 mb-2">
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <div>
-              <div className="text-xs font-bold text-white flex items-center space-x-1">
-                <span>{connectedHost.name}</span>
-                <span className="text-[10px] text-slate-500 font-mono">({connectedHost.id})</span>
-              </div>
-              <div className="text-[10px] text-emerald-400 font-medium">Standard Bluetooth HID Connected</div>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="p-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 hover:text-white transition"
-              title="Settings"
-            >
-              <Sliders className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowKeyboard(!showKeyboard)}
-              className={`p-2 rounded-xl border transition ${
-                showKeyboard ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-900 text-slate-400 border-slate-800'
-              }`}
-              title="Virtual Keyboard"
-            >
-              <KeyboardIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleDisconnect}
-              className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition"
-              title="Disconnect"
-            >
-              <Unplug className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Main Control Area */}
-        <div className="flex flex-col flex-1 min-h-0 relative">
-          {showKeyboard ? (
-            <div className="flex-1 flex flex-col justify-end">
-              <VirtualKeyboard onClose={() => setShowKeyboard(false)} />
-            </div>
-          ) : (
-            <TouchpadSurface config={gestureConfig} hapticsEnabled={hapticsEnabled} />
-          )}
-        </div>
-
-        {/* On-screen Mouse Buttons Bar */}
-        {!showKeyboard && <MouseButtonsBar />}
-
-        {/* Settings Modal */}
-        {showSettingsModal && (
-          <TouchpadSettingsModal
-            config={gestureConfig}
-            hapticsEnabled={hapticsEnabled}
-            keepAwake={keepAwake}
-            onUpdateConfig={handleUpdateConfig}
-            onToggleHaptics={handleToggleHaptics}
-            onToggleKeepAwake={handleToggleKeepAwake}
-            onClose={() => setShowSettingsModal(false)}
-          />
-        )}
-      </div>
+      <TouchpadDeck 
+        onBack={handleDisconnect} 
+        connectionMode="bluetooth" 
+      />
     );
   }
 

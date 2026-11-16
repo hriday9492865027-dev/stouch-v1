@@ -3,39 +3,18 @@ import {
   ArrowLeft, 
   Wifi, 
   AlertCircle, 
-  Sliders, 
-  Keyboard as KeyboardIcon, 
-  Unplug, 
   Laptop, 
   KeyRound,
-  ShieldCheck,
+  ShieldCheck, 
   RefreshCw,
-  MousePointer, 
-  Move, 
-  Hand
+  MousePointer 
 } from 'lucide-react';
 import { WiFiClientService, type WiFiConnectionStatus } from '@pc/WiFi-PC/connection/WiFiClientService';
-import type { GestureConfig } from '@shared/gestures/TouchpadGestureEngine';
-import { TouchpadGestureEngine } from '@shared/gestures/TouchpadGestureEngine';
-import { MouseButtonsBar } from '../components/MouseButtonsBar';
-import { VirtualKeyboard } from '../components/VirtualKeyboard';
-import { TouchpadSettingsModal } from '../components/TouchpadSettingsModal';
+import { TouchpadDeck } from '../components/TouchpadDeck';
 
 interface PCWiFiScreenProps {
   onBack: () => void;
 }
-
-const DEFAULT_GESTURE_CONFIG: GestureConfig = {
-  sensitivity: 1.3,
-  scrollSensitivity: 0.8,
-  naturalScroll: true,
-  tapToClickEnabled: true,
-  pointerAcceleration: true,
-  tapTimeoutMs: 180,
-  doubleTapTimeoutMs: 280,
-  dragHoldTimeoutMs: 320,
-  moveThresholdPx: 5,
-};
 
 export const PCWiFiScreen: React.FC<PCWiFiScreenProps> = ({ onBack }) => {
   // Connection Form State
@@ -47,39 +26,10 @@ export const PCWiFiScreen: React.FC<PCWiFiScreenProps> = ({ onBack }) => {
   const [status, setStatus] = useState<WiFiConnectionStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Active UI Controls & Modals
-  const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
-  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
-
-  // User Preferences
-  const [gestureConfig, setGestureConfig] = useState<GestureConfig>(() => {
-    try {
-      const saved = localStorage.getItem('stouch_gesture_config');
-      return saved ? { ...DEFAULT_GESTURE_CONFIG, ...JSON.parse(saved) } : DEFAULT_GESTURE_CONFIG;
-    } catch {
-      return DEFAULT_GESTURE_CONFIG;
-    }
-  });
-
-  const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => {
-    return localStorage.getItem('stouch_haptics') !== 'false';
-  });
-
-  const [keepAwake, setKeepAwake] = useState<boolean>(() => {
+  const [keepAwake] = useState<boolean>(() => {
     return localStorage.getItem('stouch_keep_awake') === 'true';
   });
 
-  const [gestureStatus, setGestureStatus] = useState<{
-    fingerCount: number;
-    isDragging: boolean;
-    isScrolling: boolean;
-  }>({
-    fingerCount: 0,
-    isDragging: false,
-    isScrolling: false,
-  });
-
-  const [feedbackEffect, setFeedbackEffect] = useState<string | null>(null);
   const wakeLockRef = useRef<any>(null);
 
   // Initialize WiFi Client
@@ -115,75 +65,6 @@ export const PCWiFiScreen: React.FC<PCWiFiScreenProps> = ({ onBack }) => {
     };
   }, [keepAwake, status]);
 
-  const triggerHaptic = (style: 'light' | 'medium' | 'heavy' = 'light') => {
-    if (hapticsEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-      if (style === 'light') navigator.vibrate(12);
-      else if (style === 'medium') navigator.vibrate(25);
-      else navigator.vibrate(40);
-    }
-  };
-
-  const triggerVisualFeedback = (text: string) => {
-    setFeedbackEffect(text);
-    setTimeout(() => setFeedbackEffect(null), 400);
-  };
-
-  // WiFi Touchpad Gesture Engine
-  const gestureEngine = useMemo(() => {
-    return new TouchpadGestureEngine(
-      {
-        onMove: (dx, dy) => {
-          client.sendMouseMove(dx, dy);
-        },
-        onScroll: (vScroll, hScroll) => {
-          client.sendMouseScroll(hScroll, vScroll);
-        },
-        onLeftClick: () => {
-          triggerHaptic('light');
-          triggerVisualFeedback('Left Click');
-          client.sendMouseButton('left', 'down');
-          setTimeout(() => client.sendMouseButton('left', 'up'), 40);
-        },
-        onRightClick: () => {
-          triggerHaptic('medium');
-          triggerVisualFeedback('Right Click');
-          client.sendMouseButton('right', 'down');
-          setTimeout(() => client.sendMouseButton('right', 'up'), 40);
-        },
-        onDoubleClick: () => {
-          triggerHaptic('medium');
-          triggerVisualFeedback('Double Click');
-          client.sendMouseButton('left', 'down');
-          setTimeout(() => {
-            client.sendMouseButton('left', 'up');
-            setTimeout(() => {
-              client.sendMouseButton('left', 'down');
-              setTimeout(() => client.sendMouseButton('left', 'up'), 40);
-            }, 40);
-          }, 40);
-        },
-        onDragStart: () => {
-          triggerHaptic('heavy');
-          triggerVisualFeedback('Drag & Drop (Holding Left Button)');
-          client.sendMouseButton('left', 'down');
-        },
-        onDragEnd: () => {
-          triggerHaptic('light');
-          triggerVisualFeedback('Drag Released');
-          client.sendMouseButton('left', 'up');
-        },
-        onGestureStateChange: (state) => {
-          setGestureStatus(state);
-        },
-      },
-      gestureConfig
-    );
-  }, [client, gestureConfig]);
-
-  useEffect(() => {
-    gestureEngine.updateConfig(gestureConfig);
-  }, [gestureConfig, gestureEngine]);
-
   const handleConnect = (e: React.FormEvent) => {
     e.preventDefault();
     if (!hostIp.trim()) {
@@ -212,135 +93,16 @@ export const PCWiFiScreen: React.FC<PCWiFiScreenProps> = ({ onBack }) => {
 
   const handleDisconnect = () => {
     client.disconnect();
+    setStatus('idle');
   };
 
   // --- Render Connected Control Surface ---
   if (status === 'connected') {
     return (
-      <div className="flex flex-col flex-1 h-screen max-w-lg mx-auto w-full p-3 select-none">
-        {/* Connected Top Bar */}
-        <div className="flex items-center justify-between py-2 border-b border-slate-800/80 mb-2">
-          <div className="flex items-center space-x-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <div>
-              <div className="text-xs font-bold text-white flex items-center space-x-1">
-                <span>PC Host</span>
-                <span className="text-[10px] text-slate-500 font-mono">({hostIp}:{port})</span>
-              </div>
-              <div className="text-[10px] text-emerald-400 font-medium">Local Wi-Fi WebSocket Connected</div>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-1.5">
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="p-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 hover:text-white transition"
-              title="Settings"
-            >
-              <Sliders className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setShowKeyboard(!showKeyboard)}
-              className={`p-2 rounded-xl border transition ${
-                showKeyboard ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-900 text-slate-400 border-slate-800'
-              }`}
-              title="Virtual Keyboard"
-            >
-              <KeyboardIcon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={handleDisconnect}
-              className="p-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20 transition"
-              title="Disconnect"
-            >
-              <Unplug className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Main Touchpad Area */}
-        <div className="flex flex-col flex-1 min-h-0 relative">
-          {showKeyboard ? (
-            <div className="flex-1 flex flex-col justify-end">
-              <VirtualKeyboard onClose={() => setShowKeyboard(false)} />
-            </div>
-          ) : (
-            <div
-              onTouchStart={(e) => gestureEngine.handleTouchStart(e)}
-              onTouchMove={(e) => gestureEngine.handleTouchMove(e)}
-              onTouchEnd={(e) => gestureEngine.handleTouchEnd(e)}
-              onTouchCancel={() => gestureEngine.handleTouchCancel()}
-              className={`relative flex-1 w-full rounded-2xl border transition-all duration-200 overflow-hidden flex flex-col items-center justify-center ${
-                gestureStatus.isDragging
-                  ? 'bg-amber-950/20 border-amber-500/50 shadow-inner shadow-amber-500/20'
-                  : gestureStatus.isScrolling
-                  ? 'bg-cyan-950/20 border-cyan-500/50'
-                  : 'bg-slate-900/80 border-slate-800'
-              }`}
-              style={{ touchAction: 'none' }}
-            >
-              <div 
-                className="absolute inset-0 opacity-[0.03] pointer-events-none"
-                style={{
-                  backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)',
-                  backgroundSize: '24px 24px',
-                }}
-              />
-
-              {feedbackEffect && (
-                <div className="absolute top-6 px-4 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-semibold text-xs animate-fade-in shadow-lg">
-                  {feedbackEffect}
-                </div>
-              )}
-
-              <div className="text-center pointer-events-none select-none p-4">
-                <div className="flex justify-center mb-3 text-slate-600">
-                  {gestureStatus.isDragging ? (
-                    <Hand className="w-10 h-10 text-amber-400 animate-pulse" />
-                  ) : gestureStatus.isScrolling ? (
-                    <Move className="w-10 h-10 text-cyan-400 animate-pulse" />
-                  ) : (
-                    <MousePointer className="w-10 h-10 text-slate-600" />
-                  )}
-                </div>
-                <p className="text-sm font-semibold text-slate-300">
-                  {gestureStatus.isDragging
-                    ? 'Dragging Active (Release to Drop)'
-                    : gestureStatus.isScrolling
-                    ? 'Two-Finger Scrolling'
-                    : 'Wi-Fi Touchpad Surface'}
-                </p>
-                <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                  Low-latency local network WebSocket control
-                </p>
-              </div>
-
-              <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center text-[11px] text-slate-500 pointer-events-none px-2">
-                <span>Fingers: {gestureStatus.fingerCount}</span>
-                <span className="font-mono text-emerald-400">Wi-Fi Direct Active</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* On-screen Mouse Buttons Bar */}
-        {!showKeyboard && <MouseButtonsBar />}
-
-        {/* Settings Modal */}
-        {showSettingsModal && (
-          <TouchpadSettingsModal
-            config={gestureConfig}
-            hapticsEnabled={hapticsEnabled}
-            keepAwake={keepAwake}
-            onUpdateConfig={(partial) => {
-              setGestureConfig(prev => ({ ...prev, ...partial }));
-            }}
-            onToggleHaptics={setHapticsEnabled}
-            onToggleKeepAwake={setKeepAwake}
-            onClose={() => setShowSettingsModal(false)}
-          />
-        )}
-      </div>
+      <TouchpadDeck 
+        onBack={handleDisconnect} 
+        connectionMode="wifi" 
+      />
     );
   }
 
