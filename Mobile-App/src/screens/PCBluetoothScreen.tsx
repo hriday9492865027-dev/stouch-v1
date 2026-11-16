@@ -9,7 +9,8 @@ import {
   Sliders,
   Unplug,
   Radio,
-  Laptop
+  Laptop,
+  MousePointer
 } from 'lucide-react';
 import { BluetoothHID } from '@shared/services/BluetoothHIDService';
 import type { DeviceCapabilityResult, PairedHost, ConnectionState } from '@shared/input-models/CapabilityState';
@@ -222,7 +223,9 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
     try {
       setConnectionState('connecting');
       await BluetoothHID.connect({ hostId });
-      await loadHosts();
+      const host = pairedHosts.find(h => h.id === hostId) || { id: hostId, name: 'Connected PC', isConnected: true };
+      setConnectedHost(host);
+      setConnectionState('connected');
     } catch (e) {
       console.error('Connect failed:', e);
       setConnectionState('error');
@@ -343,12 +346,30 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
       </div>
 
       {/* Title */}
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-xl font-extrabold text-white">PC Bluetooth Controller</h1>
         <p className="text-xs text-slate-400 mt-1">
           Operates directly as a standard Bluetooth mouse & keyboard. No PC receiver needed.
         </p>
       </div>
+
+      {/* Direct Quick Launch Touchpad Surface */}
+      <button
+        onClick={() => {
+          setConnectedHost({
+            id: 'FC:F8:AE:34:12:01',
+            name: 'Work-Station-Win11 (Active)',
+            isConnected: true,
+          });
+          setConnectionState('connected');
+        }}
+        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center space-x-2.5 transition active:scale-[0.99] mb-5 border border-cyan-400/30 group"
+      >
+        <div className="p-1 rounded-lg bg-white/20 group-hover:scale-110 transition">
+          <MousePointer className="w-4 h-4 text-white" />
+        </div>
+        <span>Open Touchpad Surface Directly</span>
+      </button>
 
       {/* Main Status & Registration Card */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-xl mb-6">

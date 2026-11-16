@@ -362,12 +362,25 @@ export const PCWiFiScreen: React.FC<PCWiFiScreenProps> = ({ onBack }) => {
       </div>
 
       {/* Title */}
-      <div className="mb-6">
+      <div className="mb-4">
         <h1 className="text-xl font-extrabold text-white">Local Wi-Fi Controller</h1>
         <p className="text-xs text-slate-400 mt-1">
           Connects via high-speed authenticated local WebSocket to the STouch Desktop Receiver on your PC.
         </p>
       </div>
+
+      {/* Direct Quick Launch Touchpad Surface */}
+      <button
+        onClick={() => {
+          setStatus('connected');
+        }}
+        className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-bold text-sm shadow-xl shadow-blue-500/25 flex items-center justify-center space-x-2.5 transition active:scale-[0.99] mb-5 border border-blue-400/30 group"
+      >
+        <div className="p-1 rounded-lg bg-white/20 group-hover:scale-110 transition">
+          <MousePointer className="w-4 h-4 text-white" />
+        </div>
+        <span>Open Wi-Fi Touchpad Directly (Demo / Test)</span>
+      </button>
 
       {/* Instructions Card */}
       <div className="rounded-2xl bg-slate-900 border border-slate-800 p-5 shadow-xl mb-6">

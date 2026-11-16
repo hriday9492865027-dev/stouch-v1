@@ -7,7 +7,8 @@ import {
   Wifi, 
   ChevronRight, 
   ShieldCheck, 
-  Info 
+  Info,
+  MousePointer
 } from 'lucide-react';
 
 export type ScreenTarget = 
@@ -63,6 +64,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
           </div>
 
           <div className="grid grid-cols-1 gap-2">
+            {/* Direct Touchpad Surface Launcher */}
+            <button
+              onClick={() => onSelectCategory('pc-bluetooth')}
+              className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-cyan-950/60 to-blue-950/60 hover:from-cyan-900/50 hover:to-blue-900/50 border border-cyan-500/40 text-left transition active:scale-[0.99] group shadow-md"
+            >
+              <div className="flex items-center space-x-3">
+                <div className="p-2 rounded-lg bg-cyan-500 text-white shadow-md shadow-cyan-500/30 group-hover:scale-105 transition">
+                  <MousePointer className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-bold text-white">Full Touchpad Surface</span>
+                    <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-cyan-500/30 text-cyan-200 border border-cyan-400/40">
+                      Primary Interface
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 mt-0.5">
+                    Multi-touch pad, mouse buttons, drag-and-drop & keyboard
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-cyan-400 group-hover:translate-x-0.5 transition" />
+            </button>
             {/* Bluetooth HID */}
             <button
               onClick={() => onSelectCategory('pc-bluetooth')}
