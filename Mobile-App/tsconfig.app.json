@@ -20,8 +20,10 @@
       "@/*": ["src/*"],
       "@shared/*": ["../Shared/*"],
       "@pc/*": ["../PC/*"],
+      "@smartboard/*": ["../SmartBoard/*"],
+      "@tv/*": ["../TV/*"],
       "@capacitor/core": ["./node_modules/@capacitor/core"]
     }
   },
-  "include": ["src", "../Shared", "../PC"]
+  "include": ["src", "../Shared", "../PC", "../SmartBoard", "../TV"]
 }

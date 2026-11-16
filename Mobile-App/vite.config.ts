@@ -10,6 +10,8 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, '../Shared'),
       '@pc': path.resolve(__dirname, '../PC'),
+      '@smartboard': path.resolve(__dirname, '../SmartBoard'),
+      '@tv': path.resolve(__dirname, '../TV'),
       '@capacitor/core': path.resolve(__dirname, './node_modules/@capacitor/core'),
     },
   },

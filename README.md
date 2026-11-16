@@ -31,8 +31,10 @@ STouch is a mobile-first device-control platform that transforms a smartphone to
   - Authenticated local WebSocket protocol (`PC/WiFi-PC/protocol/WiFiProtocol.ts`) and client service (`WiFiClientService.ts`).
   - Mobile Wi-Fi control screen (`PCWiFiScreen.tsx`) reusing full touchpad gestures, mouse buttons, and virtual keyboard with zero public cloud exposure.
 
-- **Phase 5: Smart Board & TV Expansion (Next Phase)**
-  - Verified hardware-specific adapters.
+- **Phase 5: Smart Board & TV Expansion (Completed)**
+  - Interactive Smart Board presenter (`SmartBoardScreen.tsx`) supporting slide advances, slideshow start/exit, blackout/whiteboard screen toggling, and laser pointer annotation.
+  - Smart TV remote controller (`TVScreen.tsx`) with ergonomic circular D-Pad, OK/select, back, home, volume & channel rockers, media playback controls, and virtual text search.
+  - Dedicated modular protocols and adapters in `SmartBoard/` and `TV/`.
 
 ---
 

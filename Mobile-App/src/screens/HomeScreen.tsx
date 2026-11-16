@@ -96,46 +96,52 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
           </div>
         </div>
 
-        {/* 2. Smart Board Card - Phase 5 */}
-        <div className="rounded-2xl bg-slate-900/50 border border-slate-800/50 p-5 opacity-70">
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              <Presentation className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-slate-200">Interactive Smart Boards</h3>
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  Phase 5
-                </span>
+        {/* 2. Smart Board Card - Phase 5 Active */}
+        <div 
+          onClick={() => onSelectCategory('smartboard')}
+          className="rounded-2xl bg-slate-900/90 border border-slate-800/80 p-5 shadow-xl hover:border-purple-500/50 cursor-pointer transition active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                <Presentation className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-500">Presentation, touch annotation, classroom displays</p>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-base font-bold text-slate-100">Interactive Smart Boards</h3>
+                  <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+                    Phase 5 (Active)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">Presentation clicker, laser pointer, and classroom displays</p>
+              </div>
             </div>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            Dedicated vendor adapters will be introduced in subsequent phases following PC stability.
-          </p>
         </div>
 
-        {/* 3. TV Card - Phase 5 */}
-        <div className="rounded-2xl bg-slate-900/50 border border-slate-800/50 p-5 opacity-70">
-          <div className="flex items-center space-x-3 mb-2">
-            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              <Tv className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-base font-bold text-slate-200">Smart TVs</h3>
-                <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                  Phase 5
-                </span>
+        {/* 3. TV Card - Phase 5 Active */}
+        <div 
+          onClick={() => onSelectCategory('tv')}
+          className="rounded-2xl bg-slate-900/90 border border-slate-800/80 p-5 shadow-xl hover:border-amber-500/50 cursor-pointer transition active:scale-[0.99]"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <Tv className="w-5 h-5" />
               </div>
-              <p className="text-xs text-slate-500">Android TV, Google TV, Samsung Tizen, LG webOS</p>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-base font-bold text-slate-100">Smart TVs</h3>
+                  <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    Phase 5 (Active)
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">D-Pad navigation, media playback, and volume remote</p>
+              </div>
             </div>
+            <ChevronRight className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-xs text-slate-500 mt-2">
-            TV remote control protocols will be verified individually per brand.
-          </p>
         </div>
       </div>
 

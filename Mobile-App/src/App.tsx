@@ -2,16 +2,14 @@ import React, { useState } from 'react';
 import { HomeScreen } from './screens/HomeScreen';
 import { PCBluetoothScreen } from './screens/PCBluetoothScreen';
 import { PCWiFiScreen } from './screens/PCWiFiScreen';
+import { SmartBoardScreen } from './screens/SmartBoardScreen';
+import { TVScreen } from './screens/TVScreen';
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'pc-bluetooth' | 'pc-wifi'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | 'pc-bluetooth' | 'pc-wifi' | 'smartboard' | 'tv'>('home');
 
   const handleSelectCategory = (category: 'pc-bluetooth' | 'pc-wifi' | 'smartboard' | 'tv') => {
-    if (category === 'pc-bluetooth') {
-      setCurrentScreen('pc-bluetooth');
-    } else if (category === 'pc-wifi') {
-      setCurrentScreen('pc-wifi');
-    }
+    setCurrentScreen(category);
   };
 
   return (
@@ -24,6 +22,12 @@ export const App: React.FC = () => {
       )}
       {currentScreen === 'pc-wifi' && (
         <PCWiFiScreen onBack={() => setCurrentScreen('home')} />
+      )}
+      {currentScreen === 'smartboard' && (
+        <SmartBoardScreen onBack={() => setCurrentScreen('home')} />
+      )}
+      {currentScreen === 'tv' && (
+        <TVScreen onBack={() => setCurrentScreen('home')} />
       )}
     </main>
   );
