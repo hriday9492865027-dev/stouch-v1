@@ -1,4 +1,4 @@
-﻿# STouch
+# STouch
 
 > **Your phone. Every screen. One control platform.**
 

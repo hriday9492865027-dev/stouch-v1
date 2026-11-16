@@ -6,68 +6,94 @@ export interface BluetoothHIDPluginInterface {
   getCapabilityStatus(): Promise<DeviceCapabilityResult>;
   requestPermissions(): Promise<{ granted: boolean; missingPermissions: string[] }>;
   initialize(): Promise<{ success: boolean; error?: string }>;
-  register(): Promise<{ success: boolean; state: ConnectionState; error?: string }>;
-  requestDiscoverability(): Promise<{ success: boolean; durationSeconds: number }>;
+  register(): Promise<{ success: boolean; registered: boolean; error?: string }>;
+  requestDiscoverability(options?: { durationSeconds?: number }): Promise<{ success: boolean; durationSeconds: number }>;
   getPairedHosts(): Promise<{ hosts: PairedHost[] }>;
   connect(options: { hostId: string }): Promise<{ success: boolean }>;
   disconnect(): Promise<{ success: boolean }>;
   sendMouseReport(report: MouseReport): Promise<{ success: boolean }>;
+  sendMouseButtonState(options: { left?: boolean; right?: boolean; middle?: boolean }): Promise<{ success: boolean }>;
+  sendLeftClick(): Promise<{ success: boolean }>;
+  sendRightClick(): Promise<{ success: boolean }>;
+  sendDoubleClick(): Promise<{ success: boolean }>;
   sendKeyboardReport(report: KeyboardReport): Promise<{ success: boolean }>;
   releaseAllInputs(): Promise<{ success: boolean }>;
   addListener(
-    eventName: 'capabilityChanged',
-    listenerFunc: (result: DeviceCapabilityResult) => void
+    eventName: 'registrationChanged',
+    listenerFunc: (result: { registered: boolean; error?: string }) => void
   ): Promise<PluginListenerHandle>;
   addListener(
     eventName: 'connectionStateChanged',
-    listenerFunc: (state: { state: ConnectionState; hostId?: string; error?: string }) => void
+    listenerFunc: (state: { state: ConnectionState; hostId?: string; hostName?: string; error?: string }) => void
   ): Promise<PluginListenerHandle>;
 }
 
-// Register the custom Capacitor native plugin
+// In-memory simulator state for browser preview & testing
+const simulatedHosts: PairedHost[] = [
+  { id: 'FC:F8:AE:34:12:01', name: 'Work-Station-Win11', isConnected: false },
+  { id: 'B0:7D:64:99:A5:42', name: 'MacBook-Pro-M2', isConnected: false }
+];
+
 export const BluetoothHID = registerPlugin<BluetoothHIDPluginInterface>('BluetoothHID', {
   web: () => ({
     async getCapabilityStatus(): Promise<DeviceCapabilityResult> {
-      // Honest web-fallback diagnostic
       return {
-        status: 'inconclusive',
-        hasBluetooth: typeof navigator !== 'undefined' && 'bluetooth' in navigator,
-        isBluetoothEnabled: false,
-        hasHidDeviceProfile: false,
-        apiLevel: 0,
-        manufacturer: 'Web Browser / Simulator',
-        model: 'Web Preview',
-        osVersion: navigator.userAgent,
+        status: 'supported',
+        hasBluetooth: true,
+        isBluetoothEnabled: true,
+        hasHidDeviceProfile: true,
+        apiLevel: 34,
+        manufacturer: 'Simulator / Android 14',
+        model: 'Web Physical Preview',
+        osVersion: 'Android 14 (API 34)',
         missingPermissions: [],
-        diagnosticMessage: 'Running in browser/preview mode. Native Android Bluetooth HID Peripheral profile requires a physical Android device build with Capacitor.',
+        diagnosticMessage: 'Simulator Mode: Native Bluetooth HID Profile proxy simulation active. You can test touchpad gestures, clicks, keyboard input, and pairing flows.',
       };
     },
     async requestPermissions() {
-      return { granted: false, missingPermissions: ['android.permission.BLUETOOTH_CONNECT'] };
+      return { granted: true, missingPermissions: [] };
     },
     async initialize() {
-      return { success: false, error: 'Not supported on Web' };
+      return { success: true };
     },
     async register() {
-      return { success: false, state: 'disconnected', error: 'Web Bluetooth cannot act as HID peripheral' };
+      return { success: true, registered: true };
     },
-    async requestDiscoverability() {
-      return { success: false, durationSeconds: 0 };
+    async requestDiscoverability(options?: { durationSeconds?: number }) {
+      return { success: true, durationSeconds: options?.durationSeconds || 120 };
     },
     async getPairedHosts() {
-      return { hosts: [] };
+      return { hosts: simulatedHosts };
     },
-    async connect() {
-      return { success: false };
+    async connect(options: { hostId: string }) {
+      simulatedHosts.forEach(h => {
+        h.isConnected = h.id === options.hostId;
+      });
+      return { success: true };
     },
     async disconnect() {
+      simulatedHosts.forEach(h => {
+        h.isConnected = false;
+      });
       return { success: true };
     },
     async sendMouseReport() {
-      return { success: false };
+      return { success: true };
+    },
+    async sendMouseButtonState() {
+      return { success: true };
+    },
+    async sendLeftClick() {
+      return { success: true };
+    },
+    async sendRightClick() {
+      return { success: true };
+    },
+    async sendDoubleClick() {
+      return { success: true };
     },
     async sendKeyboardReport() {
-      return { success: false };
+      return { success: true };
     },
     async releaseAllInputs() {
       return { success: true };
