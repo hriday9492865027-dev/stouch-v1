@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { HomeScreen } from './screens/HomeScreen';
+import { HomeScreen, type ScreenTarget } from './screens/HomeScreen';
 import { PCBluetoothScreen } from './screens/PCBluetoothScreen';
 import { PCWiFiScreen } from './screens/PCWiFiScreen';
 import { SmartBoardScreen } from './screens/SmartBoardScreen';
 import { TVScreen } from './screens/TVScreen';
 
 export const App: React.FC = () => {
-  const [currentScreen, setCurrentScreen] = useState<'home' | 'pc-bluetooth' | 'pc-wifi' | 'smartboard' | 'tv'>('home');
+  const [currentScreen, setCurrentScreen] = useState<'home' | ScreenTarget>('home');
 
-  const handleSelectCategory = (category: 'pc-bluetooth' | 'pc-wifi' | 'smartboard' | 'tv') => {
-    setCurrentScreen(category);
+  const handleSelectCategory = (target: ScreenTarget) => {
+    setCurrentScreen(target);
   };
 
   return (
@@ -29,17 +29,29 @@ export const App: React.FC = () => {
           {currentScreen === 'home' && (
             <HomeScreen onSelectCategory={handleSelectCategory} />
           )}
+
+          {/* PC Screens */}
           {currentScreen === 'pc-bluetooth' && (
             <PCBluetoothScreen onBack={() => setCurrentScreen('home')} />
           )}
           {currentScreen === 'pc-wifi' && (
             <PCWiFiScreen onBack={() => setCurrentScreen('home')} />
           )}
-          {currentScreen === 'smartboard' && (
-            <SmartBoardScreen onBack={() => setCurrentScreen('home')} />
+
+          {/* Smart Board Screens */}
+          {currentScreen === 'smartboard-bluetooth' && (
+            <SmartBoardScreen initialMode="bluetooth" onBack={() => setCurrentScreen('home')} />
           )}
-          {currentScreen === 'tv' && (
-            <TVScreen onBack={() => setCurrentScreen('home')} />
+          {currentScreen === 'smartboard-wifi' && (
+            <SmartBoardScreen initialMode="wifi" onBack={() => setCurrentScreen('home')} />
+          )}
+
+          {/* Smart TV Screens */}
+          {currentScreen === 'tv-bluetooth' && (
+            <TVScreen initialMode="bluetooth" onBack={() => setCurrentScreen('home')} />
+          )}
+          {currentScreen === 'tv-wifi' && (
+            <TVScreen initialMode="wifi" onBack={() => setCurrentScreen('home')} />
           )}
         </div>
       </main>
