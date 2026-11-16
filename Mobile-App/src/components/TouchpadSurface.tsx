@@ -1,16 +1,16 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
-import { TouchpadGestureEngine } from '@shared/gestures/TouchpadGestureEngine';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
+import { TouchpadGestureEngine, type GestureConfig } from '@shared/gestures/TouchpadGestureEngine';
 import { BluetoothHID } from '@shared/services/BluetoothHIDService';
 import { MousePointer, Move, Hand } from 'lucide-react';
 
 interface TouchpadSurfaceProps {
-  sensitivity?: number;
-  scrollSensitivity?: number;
+  config: GestureConfig;
+  hapticsEnabled: boolean;
 }
 
 export const TouchpadSurface: React.FC<TouchpadSurfaceProps> = ({
-  sensitivity = 1.3,
-  scrollSensitivity = 0.8,
+  config,
+  hapticsEnabled,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [gestureStatus, setGestureStatus] = useState<{
@@ -26,7 +26,7 @@ export const TouchpadSurface: React.FC<TouchpadSurfaceProps> = ({
   const [feedbackEffect, setFeedbackEffect] = useState<string | null>(null);
 
   const triggerHaptic = (style: 'light' | 'medium' | 'heavy' = 'light') => {
-    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+    if (hapticsEnabled && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       if (style === 'light') navigator.vibrate(12);
       else if (style === 'medium') navigator.vibrate(25);
       else navigator.vibrate(40);
@@ -76,13 +76,14 @@ export const TouchpadSurface: React.FC<TouchpadSurfaceProps> = ({
           setGestureStatus(state);
         },
       },
-      { sensitivity, scrollSensitivity }
+      config
     );
-  }, [sensitivity, scrollSensitivity]);
+  }, []);
 
+  // Live update config whenever user adjusts sliders/toggles
   useEffect(() => {
-    engine.updateConfig({ sensitivity, scrollSensitivity });
-  }, [sensitivity, scrollSensitivity, engine]);
+    engine.updateConfig(config);
+  }, [config, engine]);
 
   return (
     <div
@@ -135,14 +136,16 @@ export const TouchpadSurface: React.FC<TouchpadSurfaceProps> = ({
             : 'Touchpad Surface'}
         </p>
         <p className="text-xs text-slate-500 mt-1 max-w-xs">
-          1-finger slide to move • Tap to click • 2-finger tap for right click • 2-finger slide to scroll • Long-press to drag
+          1-finger slide to move • {config.tapToClickEnabled ? 'Tap to click • ' : ''}2-finger scroll • Long-press to drag
         </p>
       </div>
 
       {/* Bottom Live Gesture Pill */}
       <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center text-[11px] text-slate-500 pointer-events-none px-2">
         <span>Fingers: {gestureStatus.fingerCount}</span>
-        <span className="font-mono">HID 60Hz Low Latency</span>
+        <span className="font-mono">
+          {config.pointerAcceleration ? 'Accel ON' : 'Accel OFF'} • {config.naturalScroll ? 'Natural' : 'Traditional'}
+        </span>
       </div>
     </div>
   );

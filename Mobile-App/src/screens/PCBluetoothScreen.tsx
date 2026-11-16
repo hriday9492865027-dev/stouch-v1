@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { 
   ArrowLeft, 
   Bluetooth, 
@@ -13,13 +13,27 @@ import {
 } from 'lucide-react';
 import { BluetoothHID } from '@shared/services/BluetoothHIDService';
 import type { DeviceCapabilityResult, PairedHost, ConnectionState } from '@shared/input-models/CapabilityState';
+import type { GestureConfig } from '@shared/gestures/TouchpadGestureEngine';
 import { TouchpadSurface } from '../components/TouchpadSurface';
 import { MouseButtonsBar } from '../components/MouseButtonsBar';
 import { VirtualKeyboard } from '../components/VirtualKeyboard';
+import { TouchpadSettingsModal } from '../components/TouchpadSettingsModal';
 
 interface PCBluetoothScreenProps {
   onBack: () => void;
 }
+
+const DEFAULT_GESTURE_CONFIG: GestureConfig = {
+  sensitivity: 1.3,
+  scrollSensitivity: 0.8,
+  naturalScroll: true,
+  tapToClickEnabled: true,
+  pointerAcceleration: true,
+  tapTimeoutMs: 180,
+  doubleTapTimeoutMs: 280,
+  dragHoldTimeoutMs: 320,
+  moveThresholdPx: 5,
+};
 
 export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) => {
   // Capability State
@@ -34,10 +48,75 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
   const [connectedHost, setConnectedHost] = useState<PairedHost | null>(null);
   const [discoverableSeconds, setDiscoverableSeconds] = useState<number>(0);
 
-  // Active UI Tabs when Connected
+  // Active UI Controls & Modals
   const [showKeyboard, setShowKeyboard] = useState<boolean>(false);
-  const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [sensitivity, setSensitivity] = useState<number>(1.3);
+  const [showSettingsModal, setShowSettingsModal] = useState<boolean>(false);
+
+  // User Preferences
+  const [gestureConfig, setGestureConfig] = useState<GestureConfig>(() => {
+    try {
+      const saved = localStorage.getItem('stouch_gesture_config');
+      return saved ? { ...DEFAULT_GESTURE_CONFIG, ...JSON.parse(saved) } : DEFAULT_GESTURE_CONFIG;
+    } catch {
+      return DEFAULT_GESTURE_CONFIG;
+    }
+  });
+
+  const [hapticsEnabled, setHapticsEnabled] = useState<boolean>(() => {
+    return localStorage.getItem('stouch_haptics') !== 'false';
+  });
+
+  const [keepAwake, setKeepAwake] = useState<boolean>(() => {
+    return localStorage.getItem('stouch_keep_awake') === 'true';
+  });
+
+  const wakeLockRef = useRef<any>(null);
+
+  // Screen Wake Lock Management
+  useEffect(() => {
+    const handleWakeLock = async () => {
+      if (keepAwake && 'wakeLock' in navigator && connectionState === 'connected') {
+        try {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        } catch (e) {
+          console.warn('Wake Lock request rejected:', e);
+        }
+      } else if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+        } catch {}
+        wakeLockRef.current = null;
+      }
+    };
+
+    handleWakeLock();
+    return () => {
+      if (wakeLockRef.current) {
+        wakeLockRef.current.release().catch(() => {});
+        wakeLockRef.current = null;
+      }
+    };
+  }, [keepAwake, connectionState]);
+
+  const handleUpdateConfig = (partial: Partial<GestureConfig>) => {
+    setGestureConfig((prev) => {
+      const updated = { ...prev, ...partial };
+      try {
+        localStorage.setItem('stouch_gesture_config', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
+  const handleToggleHaptics = (enabled: boolean) => {
+    setHapticsEnabled(enabled);
+    localStorage.setItem('stouch_haptics', enabled ? 'true' : 'false');
+  };
+
+  const handleToggleKeepAwake = (enabled: boolean) => {
+    setKeepAwake(enabled);
+    localStorage.setItem('stouch_keep_awake', enabled ? 'true' : 'false');
+  };
 
   const checkCapability = async () => {
     setLoading(true);
@@ -81,7 +160,6 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
     checkCapability();
     loadHosts();
 
-    // Listen for native connection state changes
     const connSub = BluetoothHID.addListener('connectionStateChanged', (data) => {
       setConnectionState(data.state);
       if (data.state === 'connected' && data.hostId) {
@@ -192,10 +270,9 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
 
           <div className="flex items-center space-x-1.5">
             <button
-              onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-xl border transition ${
-                showSettings ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-900 text-slate-400 border-slate-800'
-              }`}
+              onClick={() => setShowSettingsModal(true)}
+              className="p-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 hover:text-white transition"
+              title="Settings"
             >
               <Sliders className="w-4 h-4" />
             </button>
@@ -204,6 +281,7 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
               className={`p-2 rounded-xl border transition ${
                 showKeyboard ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-900 text-slate-400 border-slate-800'
               }`}
+              title="Virtual Keyboard"
             >
               <KeyboardIcon className="w-4 h-4" />
             </button>
@@ -217,25 +295,6 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
           </div>
         </div>
 
-        {/* Settings Overlay Drawer */}
-        {showSettings && (
-          <div className="p-3 mb-2 rounded-2xl bg-slate-900 border border-slate-800 text-xs">
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-slate-300">Touchpad Pointer Sensitivity</span>
-              <span className="text-cyan-400 font-mono">{sensitivity.toFixed(1)}x</span>
-            </div>
-            <input
-              type="range"
-              min="0.5"
-              max="3.0"
-              step="0.1"
-              value={sensitivity}
-              onChange={(e) => setSensitivity(parseFloat(e.target.value))}
-              className="w-full accent-cyan-500"
-            />
-          </div>
-        )}
-
         {/* Main Control Area */}
         <div className="flex flex-col flex-1 min-h-0 relative">
           {showKeyboard ? (
@@ -243,12 +302,25 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
               <VirtualKeyboard onClose={() => setShowKeyboard(false)} />
             </div>
           ) : (
-            <TouchpadSurface sensitivity={sensitivity} />
+            <TouchpadSurface config={gestureConfig} hapticsEnabled={hapticsEnabled} />
           )}
         </div>
 
         {/* On-screen Mouse Buttons Bar */}
         {!showKeyboard && <MouseButtonsBar />}
+
+        {/* Settings Modal */}
+        {showSettingsModal && (
+          <TouchpadSettingsModal
+            config={gestureConfig}
+            hapticsEnabled={hapticsEnabled}
+            keepAwake={keepAwake}
+            onUpdateConfig={handleUpdateConfig}
+            onToggleHaptics={handleToggleHaptics}
+            onToggleKeepAwake={handleToggleKeepAwake}
+            onClose={() => setShowSettingsModal(false)}
+          />
+        )}
       </div>
     );
   }

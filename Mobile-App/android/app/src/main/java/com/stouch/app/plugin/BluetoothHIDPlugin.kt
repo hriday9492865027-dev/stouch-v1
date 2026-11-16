@@ -47,6 +47,17 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
         hidManager = BluetoothHIDManager(context, this)
     }
 
+    override fun handleOnPause() {
+        super.handleOnPause()
+        // Release all active mouse buttons and keys when the app leaves foreground
+        hidManager.releaseAllInputs()
+    }
+
+    override fun handleOnDestroy() {
+        super.handleOnDestroy()
+        hidManager.releaseAllInputs()
+    }
+
     @PluginMethod
     fun getCapabilityStatus(call: PluginCall) {
         capabilityDetector.evaluateCapability { evaluation ->

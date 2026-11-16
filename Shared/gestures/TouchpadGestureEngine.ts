@@ -1,6 +1,7 @@
 /**
  * STouch Touchpad Gesture Engine
- * Implements pointer acceleration, click/drag state machine, two-finger scrolling, and tap timing.
+ * Implements pointer acceleration curves, tap-to-click controls, natural scrolling,
+ * click/drag state machine, two-finger scrolling, and sub-pixel accumulation.
  * Reference architecture: Kurza TouchpadGestureHandler + KuneLab PointerPump.
  */
 
@@ -16,12 +17,15 @@ export interface GestureCallbacks {
 }
 
 export interface GestureConfig {
-  sensitivity: number;       // default 1.2
-  scrollSensitivity: number; // default 0.8
-  tapTimeoutMs: number;      // default 200ms
-  doubleTapTimeoutMs: number;// default 300ms
-  dragHoldTimeoutMs: number; // default 350ms
-  moveThresholdPx: number;   // default 6px
+  sensitivity: number;          // Pointer multiplier (0.5 to 3.0, default 1.3)
+  scrollSensitivity: number;    // Scroll multiplier (0.5 to 2.0, default 0.8)
+  naturalScroll: boolean;       // Natural (finger moves content) vs Traditional (finger moves scrollbar)
+  tapToClickEnabled: boolean;   // Enable tap-to-click vs requiring hardware/on-screen buttons
+  pointerAcceleration: boolean; // Dynamic acceleration curve for quick movements
+  tapTimeoutMs: number;         // Max duration for tap detection (default 180ms)
+  doubleTapTimeoutMs: number;   // Max interval between two taps (default 280ms)
+  dragHoldTimeoutMs: number;    // Hold duration before drag engages (default 320ms)
+  moveThresholdPx: number;      // Distance before move cancels tap (default 5px)
 }
 
 interface TouchPoint {
@@ -44,8 +48,6 @@ export class TouchpadGestureEngine {
   private hasMoved: boolean = false;
   private isDragging: boolean = false;
   private isTwoFingerScroll: boolean = false;
-  private twoFingerStartY: number = 0;
-  private twoFingerStartX: number = 0;
 
   private lastTapTime: number = 0;
   private tapPendingTimer: any = null;
@@ -58,8 +60,11 @@ export class TouchpadGestureEngine {
   constructor(callbacks: GestureCallbacks, config?: Partial<GestureConfig>) {
     this.callbacks = callbacks;
     this.config = {
-      sensitivity: 1.2,
+      sensitivity: 1.3,
       scrollSensitivity: 0.8,
+      naturalScroll: true,
+      tapToClickEnabled: true,
+      pointerAcceleration: true,
       tapTimeoutMs: 180,
       doubleTapTimeoutMs: 280,
       dragHoldTimeoutMs: 320,
@@ -70,6 +75,10 @@ export class TouchpadGestureEngine {
 
   public updateConfig(newConfig: Partial<GestureConfig>) {
     this.config = { ...this.config, ...newConfig };
+  }
+
+  public getConfig(): Readonly<GestureConfig> {
+    return this.config;
   }
 
   public handleTouchStart(e: React.TouchEvent | TouchEvent) {
@@ -112,10 +121,8 @@ export class TouchpadGestureEngine {
       }
       this.isTwoFingerScroll = true;
       const touches = Array.from(this.activeTouches.values());
-      this.twoFingerStartX = (touches[0].x + touches[1].x) / 2;
-      this.twoFingerStartY = (touches[0].y + touches[1].y) / 2;
-      this.lastMoveX = this.twoFingerStartX;
-      this.lastMoveY = this.twoFingerStartY;
+      this.lastMoveX = (touches[0].x + touches[1].x) / 2;
+      this.lastMoveY = (touches[0].y + touches[1].y) / 2;
     }
 
     this.notifyState();
@@ -145,8 +152,14 @@ export class TouchpadGestureEngine {
       }
 
       if (this.hasMoved) {
-        const scaledX = (rawDx * this.config.sensitivity) + this.remainderX;
-        const scaledY = (rawDy * this.config.sensitivity) + this.remainderY;
+        // Compute acceleration curve if enabled
+        const rawSpeed = Math.hypot(rawDx, rawDy);
+        const accelFactor = this.config.pointerAcceleration
+          ? Math.min(2.2, 1.0 + (rawSpeed / 20.0))
+          : 1.0;
+
+        const scaledX = (rawDx * this.config.sensitivity * accelFactor) + this.remainderX;
+        const scaledY = (rawDy * this.config.sensitivity * accelFactor) + this.remainderY;
 
         const intX = Math.trunc(scaledX);
         const intY = Math.trunc(scaledY);
@@ -170,7 +183,8 @@ export class TouchpadGestureEngine {
       const deltaY = centerY - this.lastMoveY;
       const deltaX = centerX - this.lastMoveX;
 
-      const scrollV = Math.trunc(-deltaY * this.config.scrollSensitivity);
+      const scrollMultiplier = this.config.naturalScroll ? -1 : 1;
+      const scrollV = Math.trunc(deltaY * scrollMultiplier * this.config.scrollSensitivity);
       const scrollH = Math.trunc(deltaX * this.config.scrollSensitivity);
 
       this.lastMoveX = centerX;
@@ -189,7 +203,6 @@ export class TouchpadGestureEngine {
     const now = Date.now();
     clearTimeout(this.dragHoldTimer);
 
-    // Snapshot count before removal
     const countBeforeRemoval = this.activeTouches.size;
 
     for (let i = 0; i < e.changedTouches.length; i++) {
@@ -203,8 +216,8 @@ export class TouchpadGestureEngine {
       return;
     }
 
-    // Tap Detection
-    if (!this.hasMoved) {
+    // Tap Detection (only when tap-to-click is enabled)
+    if (!this.hasMoved && this.config.tapToClickEnabled) {
       if (countBeforeRemoval === 1) {
         // Single or Double Tap
         if (now - this.lastTapTime < this.config.doubleTapTimeoutMs) {

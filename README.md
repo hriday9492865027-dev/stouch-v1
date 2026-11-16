@@ -8,25 +8,25 @@ STouch is a mobile-first device-control platform that transforms a smartphone to
 
 ## Architecture & Phased Roadmap
 
-- **Phase 1: Foundation (Current)**
+- **Phase 1: Foundation (Completed)**
   - Exact modular folder structure (`PC`, `SmartBoard`, `TV`, `Shared`, `Mobile-App`, `Desktop-App`, `Documentation`).
   - React + TypeScript mobile application shell.
   - Capacitor Android packaging.
-  - Kotlin `BluetoothHIDPlugin` native skeleton with unbiased multi-OEM capability detection (`supported`, `unsupported`, `permission-required`, `bluetooth-off`, `inconclusive`).
-  - Runtime diagnostic and verification UI under `PCs → Bluetooth`.
+  - Kotlin `BluetoothHIDPlugin` native skeleton with unbiased multi-OEM capability detection.
 
-- **Phase 2: Bluetooth MVP**
+- **Phase 2: Bluetooth MVP (Completed)**
   - Native HID Device profile registration via Kotlin.
-  - Standard HID Mouse and Keyboard reports.
+  - Standard HID Mouse (Report ID 4), Keyboard (Report ID 8), and Media (Report ID 10) reports.
   - Bluetooth pairing lifecycle with PC without companion software.
   - Touchpad gesture engine and safe input release failsafe.
 
-- **Phase 3: Bluetooth Stability & Cross-OEM Compatibility**
-  - Validation across multiple Android device cohorts (Google Pixel, Samsung, OnePlus, Xiaomi, Motorola, etc.).
-  - Advanced gestures and sensitivity settings.
-  - Background lifecycle & reconnect management.
+- **Phase 3: Bluetooth Stability & Cross-OEM Compatibility (Completed)**
+  - Multi-manufacturer compatibility records and regression test matrix (`COMPATIBILITY_MATRIX.md`).
+  - Advanced gestures & custom settings (pointer acceleration curves, natural/traditional scrolling, tap-to-click, haptics, screen wake-lock).
+  - Background lifecycle hooks (`handleOnPause`, `handleOnDestroy`) with guaranteed input release failsafe.
+  - Host PC troubleshooting guide (`HostTroubleshooting.md`) for Windows/macOS/Linux Bluetooth descriptor cache invalidation.
 
-- **Phase 4: PC Wi-Fi Mode**
+- **Phase 4: PC Wi-Fi Mode (Next Phase)**
   - Lightweight desktop receiver (`Desktop-App/`).
   - Authenticated local WebSocket and ephemeral QR pairing.
 
