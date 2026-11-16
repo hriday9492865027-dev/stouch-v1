@@ -9,6 +9,7 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, '../Shared'),
+      '@pc': path.resolve(__dirname, '../PC'),
       '@capacitor/core': path.resolve(__dirname, './node_modules/@capacitor/core'),
     },
   },

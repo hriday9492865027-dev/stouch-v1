@@ -26,11 +26,12 @@ STouch is a mobile-first device-control platform that transforms a smartphone to
   - Background lifecycle hooks (`handleOnPause`, `handleOnDestroy`) with guaranteed input release failsafe.
   - Host PC troubleshooting guide (`HostTroubleshooting.md`) for Windows/macOS/Linux Bluetooth descriptor cache invalidation.
 
-- **Phase 4: PC Wi-Fi Mode (Next Phase)**
-  - Lightweight desktop receiver (`Desktop-App/`).
-  - Authenticated local WebSocket and ephemeral QR pairing.
+- **Phase 4: PC Wi-Fi Mode (Completed)**
+  - Standalone desktop companion receiver (`Desktop-App/receiver/stouch_receiver.py`) with Tkinter status UI, local LAN IP display, rotating 6-digit PIN, and session revocation.
+  - Authenticated local WebSocket protocol (`PC/WiFi-PC/protocol/WiFiProtocol.ts`) and client service (`WiFiClientService.ts`).
+  - Mobile Wi-Fi control screen (`PCWiFiScreen.tsx`) reusing full touchpad gestures, mouse buttons, and virtual keyboard with zero public cloud exposure.
 
-- **Phase 5: Smart Board & TV Expansion**
+- **Phase 5: Smart Board & TV Expansion (Next Phase)**
   - Verified hardware-specific adapters.
 
 ---

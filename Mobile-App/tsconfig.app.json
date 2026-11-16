@@ -19,8 +19,9 @@
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["../Shared/*"],
+      "@pc/*": ["../PC/*"],
       "@capacitor/core": ["./node_modules/@capacitor/core"]
     }
   },
-  "include": ["src", "../Shared"]
+  "include": ["src", "../Shared", "../PC"]
 }

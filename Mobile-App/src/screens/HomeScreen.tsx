@@ -59,7 +59,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
                   <div className="flex items-center space-x-2">
                     <span className="text-sm font-semibold text-white">Bluetooth HID Mode</span>
                     <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      Phase 1 (Active)
+                      Direct BT
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -70,27 +70,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
               <ChevronRight className="w-4 h-4 text-slate-500" />
             </button>
 
-            {/* Wi-Fi Mode - Coming in Phase 4 */}
+            {/* Wi-Fi Mode - Active */}
             <button
-              disabled
-              className="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/40 text-left border border-slate-800/40 opacity-60 cursor-not-allowed"
+              onClick={() => onSelectCategory('pc-wifi')}
+              className="flex items-center justify-between p-3.5 rounded-xl bg-slate-800/70 hover:bg-slate-800 text-left border border-slate-700/60 transition active:scale-[0.99]"
             >
               <div className="flex items-center space-x-3">
-                <div className="p-2 rounded-lg bg-slate-800 text-slate-400">
+                <div className="p-2 rounded-lg bg-blue-500/15 text-blue-400">
                   <Wifi className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-semibold text-slate-300">Local Wi-Fi Mode</span>
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">
-                      Phase 4
+                    <span className="text-sm font-semibold text-white">Local Wi-Fi Mode</span>
+                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                      Phase 4 (Active)
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Requires STouch Desktop Receiver via QR pairing.
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Fast WebSocket control via STouch Desktop Receiver.
                   </p>
                 </div>
               </div>
+              <ChevronRight className="w-4 h-4 text-slate-500" />
             </button>
           </div>
         </div>
