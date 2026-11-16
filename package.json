@@ -1,0 +1,12 @@
+{
+  "name": "stouch",
+  "version": "1.0.0",
+  "private": true,
+  "description": "STouch - Turn your Android phone into a universal Bluetooth & Wi-Fi input controller",
+  "scripts": {
+    "build": "cd Mobile-App && npm install && npm run build",
+    "preview": "cd Mobile-App && npm run preview",
+    "test:receiver": "python Desktop-App/receiver/test_receiver_e2e.py",
+    "test:gestures": "node --experimental-strip-types Shared/gestures/TouchpadGestureEngine.test.mjs"
+  }
+}

@@ -36,3 +36,7 @@ local.properties
 
 # Reference Research Repositories
 research/
+.vercel
+
+__pycache__/
+*.pyc
