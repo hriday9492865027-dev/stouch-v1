@@ -27,6 +27,13 @@
     <!-- Internet for Web Assets and later local Wi-Fi mode -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Foreground Service to keep app alive while controlling devices -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    
+    <!-- Wake lock to keep CPU running while Bluetooth HID reports are being sent -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -49,6 +56,13 @@
             </intent-filter>
 
         </activity>
+
+        <!-- Foreground service to prevent OS from killing the app during active BT control -->
+        <service
+            android:name=".STouchForegroundService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
