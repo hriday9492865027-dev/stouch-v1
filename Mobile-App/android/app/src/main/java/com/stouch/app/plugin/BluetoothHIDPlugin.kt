@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.os.Build
+import android.util.Log
+import com.stouch.app.STouchForegroundService
 import androidx.activity.result.ActivityResultLauncher
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
@@ -42,9 +44,16 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
     private lateinit var hidManager: BluetoothHIDManager
 
     override fun load() {
-        super.load()
-        capabilityDetector = BluetoothCapabilityDetector(context)
-        hidManager = BluetoothHIDManager(context, this)
+        try {
+            super.load()
+            capabilityDetector = BluetoothCapabilityDetector(context)
+            hidManager = BluetoothHIDManager(context, this)
+        } catch (e: Exception) {
+            Log.e("STouch_Plugin", "BluetoothHIDPlugin.load() error: ${e.message}", e)
+            // Initialise safe fallbacks so plugin methods don't NPE
+            if (!::capabilityDetector.isInitialized) capabilityDetector = BluetoothCapabilityDetector(context)
+            if (!::hidManager.isInitialized) hidManager = BluetoothHIDManager(context, this)
+        }
     }
 
     override fun handleOnPause() {
@@ -55,6 +64,9 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
 
     override fun handleOnDestroy() {
         super.handleOnDestroy()
+        try {
+            STouchForegroundService.stop(context)
+        } catch (_: Throwable) {}
         hidManager.releaseAllInputs()
     }
 
@@ -139,9 +151,12 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
 
         for (device in bonded) {
             val obj = JSObject()
-            obj.put("id", device.address)
-            obj.put("name", device.name ?: "Unnamed PC")
-            obj.put("isConnected", device.address == hidManager.connectedHost?.address)
+            val address = try { device.address } catch (_: Throwable) { "" }
+            val name = try { device.name ?: "Unnamed PC" } catch (_: Throwable) { "Unnamed PC" }
+            val isConnected = try { address == hidManager.connectedHost?.address } catch (_: Throwable) { false }
+            obj.put("id", address)
+            obj.put("name", name)
+            obj.put("isConnected", isConnected)
             hostsArray.put(obj)
         }
 
@@ -268,6 +283,16 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
 
     @SuppressLint("MissingPermission")
     override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
+        if (state == BluetoothProfile.STATE_CONNECTED) {
+            try {
+                STouchForegroundService.start(context)
+            } catch (_: Throwable) {}
+        } else if (state == BluetoothProfile.STATE_DISCONNECTED) {
+            try {
+                STouchForegroundService.stop(context)
+            } catch (_: Throwable) {}
+        }
+
         val data = JSObject()
         val stateName = when (state) {
             BluetoothProfile.STATE_CONNECTED -> "connected"
@@ -276,9 +301,11 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
             BluetoothProfile.STATE_DISCONNECTED -> "disconnected"
             else -> "unknown"
         }
+        val hostId = try { device?.address } catch (_: Throwable) { null }
+        val hostName = try { device?.name } catch (_: Throwable) { null }
         data.put("state", stateName)
-        data.put("hostId", device?.address)
-        data.put("hostName", device?.name)
+        data.put("hostId", hostId)
+        data.put("hostName", hostName)
         notifyListeners("connectionStateChanged", data)
     }
 

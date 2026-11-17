@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Bluetooth Hardware Requirements -->
     <uses-feature
@@ -24,16 +25,14 @@
         android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
 
-    <!-- Internet for Web Assets and later local Wi-Fi mode -->
+    <!-- Internet for Web Assets and local Wi-Fi mode -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Foreground Service to keep app alive while controlling devices -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <!-- FOREGROUND_SERVICE_CONNECTED_DEVICE only needed on API 34+, added conditionally -->
-    <uses-permission
-        android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
-        android:minSdkVersion="34" />
-    
+    <!-- Required on Android 14+ for connectedDevice foreground service type -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
     <!-- Wake lock to keep CPU running while Bluetooth HID reports are being sent -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
@@ -60,11 +59,13 @@
 
         </activity>
 
-        <!-- Foreground service to prevent OS from killing the app during active BT control -->
+        <!-- Foreground service - foregroundServiceType declared for Android 10+ compliance -->
         <service
             android:name=".STouchForegroundService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice"
+            tools:targetApi="29" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

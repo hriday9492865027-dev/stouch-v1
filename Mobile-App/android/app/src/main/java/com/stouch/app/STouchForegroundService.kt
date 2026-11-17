@@ -7,15 +7,17 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.content.ContextCompat
 
 /**
  * ForegroundService keeps STouch alive in the background while Bluetooth HID is active.
- * Without this, Android aggressively kills the app when the screen is off or another app is foreground.
+ * Protected with checks for Android 14+ permissions so it never crashes.
  */
 class STouchForegroundService : Service() {
 
@@ -28,6 +30,18 @@ class STouchForegroundService : Service() {
 
         fun start(context: Context) {
             try {
+                // On Android 12+ (API 31+), verify BLUETOOTH_CONNECT permission before attempting FGS
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.BLUETOOTH_CONNECT
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        Log.w(TAG, "Cannot start FGS: BLUETOOTH_CONNECT permission not yet granted")
+                        return
+                    }
+                }
+
                 val intent = Intent(context, STouchForegroundService::class.java).apply {
                     action = ACTION_START
                 }
@@ -36,8 +50,8 @@ class STouchForegroundService : Service() {
                 } else {
                     context.startService(intent)
                 }
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to start foreground service: ${e.message}", e)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Safe catch: Failed to start foreground service: ${e.message}")
             }
         }
 
@@ -47,8 +61,8 @@ class STouchForegroundService : Service() {
                     action = ACTION_STOP
                 }
                 context.startService(intent)
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to stop foreground service: ${e.message}", e)
+            } catch (e: Throwable) {
+                Log.e(TAG, "Safe catch: Failed to stop foreground service: ${e.message}")
             }
         }
     }
@@ -65,45 +79,46 @@ class STouchForegroundService : Service() {
         super.onCreate()
         try {
             createNotificationChannel()
-        } catch (e: Exception) {
-            Log.e(TAG, "onCreate error: ${e.message}", e)
+        } catch (e: Throwable) {
+            Log.e(TAG, "onCreate channel error: ${e.message}")
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        try {
-            when (intent?.action) {
-                ACTION_START -> {
-                    val notification = buildNotification()
-                    // foregroundServiceType only needed on API 29+; on API 28 use simple startForeground
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                        startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
-                    } else {
-                        startForeground(NOTIFICATION_ID, notification)
-                    }
-                }
-                ACTION_STOP -> {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                    } else {
-                        @Suppress("DEPRECATION")
-                        stopForeground(true)
-                    }
-                    stopSelf()
-                }
-                else -> {
-                    // If started without an action (e.g. system restart), just start foreground
-                    val notification = buildNotification()
-                    startForeground(NOTIFICATION_ID, notification)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "onStartCommand error: ${e.message}", e)
-            // Still try basic startForeground to avoid ForegroundServiceDidNotStartInTimeException
+        if (intent?.action == ACTION_STOP) {
             try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_REMOVE)
+                } else {
+                    @Suppress("DEPRECATION")
+                    stopForeground(true)
+                }
+                stopSelf()
+            } catch (e: Throwable) {
+                Log.e(TAG, "stopForeground error: ${e.message}")
+            }
+            return START_NOT_STICKY
+        }
+
+        try {
+            val notification = buildNotification()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+                )
+            } else {
+                startForeground(NOTIFICATION_ID, notification)
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "startForeground error: ${e.message}")
+            try {
+                // Fallback to simple startForeground
                 startForeground(NOTIFICATION_ID, buildNotification())
-            } catch (e2: Exception) {
-                Log.e(TAG, "Fallback startForeground also failed: ${e2.message}", e2)
+            } catch (e2: Throwable) {
+                Log.e(TAG, "Fallback startForeground failed, stopping self safely: ${e2.message}")
+                stopSelf()
             }
         }
         return START_STICKY
@@ -136,7 +151,7 @@ class STouchForegroundService : Service() {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, CHANNEL_ID)
                 .setContentTitle("STouch is Active")
-                .setContentText("Bluetooth controller running in background")
+                .setContentText("Bluetooth controller connected")
                 .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
@@ -145,7 +160,7 @@ class STouchForegroundService : Service() {
             @Suppress("DEPRECATION")
             Notification.Builder(this)
                 .setContentTitle("STouch is Active")
-                .setContentText("Bluetooth controller running in background")
+                .setContentText("Bluetooth controller connected")
                 .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)

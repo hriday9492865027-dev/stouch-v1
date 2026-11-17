@@ -97,7 +97,7 @@ class BluetoothCapabilityDetector(private val context: Context) {
                 CapabilityEvaluation(
                     status = "unsupported",
                     hasBluetooth = true,
-                    isBluetoothEnabled = bluetoothAdapter.isEnabled,
+                    isBluetoothEnabled = try { bluetoothAdapter.isEnabled } catch (e: Exception) { false },
                     hasHidDeviceProfile = false,
                     apiLevel = apiLevel,
                     manufacturer = manufacturer,
@@ -117,7 +117,7 @@ class BluetoothCapabilityDetector(private val context: Context) {
                 CapabilityEvaluation(
                     status = "permission-required",
                     hasBluetooth = true,
-                    isBluetoothEnabled = bluetoothAdapter.isEnabled,
+                    isBluetoothEnabled = try { bluetoothAdapter.isEnabled } catch (e: Exception) { false },
                     hasHidDeviceProfile = false,
                     apiLevel = apiLevel,
                     manufacturer = manufacturer,

@@ -58,74 +58,107 @@ class BluetoothHIDManager(
     private val keyboardBuffer = ByteArray(8) { 0 }
 
     fun initialize() {
-        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled) {
-            Log.w(TAG, "Bluetooth adapter not available or disabled")
-            return
-        }
-        if (hidDevice == null) {
-            bluetoothAdapter.getProfileProxy(context, this, BluetoothProfile.HID_DEVICE)
+        try {
+            if (bluetoothAdapter == null) {
+                Log.w(TAG, "Bluetooth adapter not available")
+                return
+            }
+            val enabled = try { bluetoothAdapter.isEnabled } catch (_: SecurityException) { false }
+            if (!enabled) {
+                Log.w(TAG, "Bluetooth disabled or missing permission")
+                return
+            }
+            if (hidDevice == null) {
+                bluetoothAdapter.getProfileProxy(context, this, BluetoothProfile.HID_DEVICE)
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "initialize failed: ${e.message}")
         }
     }
 
     fun registerApp() {
-        val hid = hidDevice
-        if (hid == null) {
-            Log.w(TAG, "Cannot registerApp: hidDevice proxy not yet connected")
-            initialize()
-            return
-        }
-
         try {
-            // Unregister any previous stale instance
-            hid.unregisterApp()
-        } catch (e: Exception) {
-            Log.d(TAG, "Clean unregisterApp exception: ${e.message}")
+            val hid = hidDevice
+            if (hid == null) {
+                Log.w(TAG, "Cannot registerApp: hidDevice proxy not yet connected")
+                initialize()
+                return
+            }
+
+            try {
+                // Unregister any previous stale instance
+                hid.unregisterApp()
+            } catch (e: Throwable) {
+                Log.d(TAG, "Clean unregisterApp exception: ${e.message}")
+            }
+
+            val sdpSettings = BluetoothHidDeviceAppSdpSettings(
+                "STouch",
+                "STouch Bluetooth Input Controller",
+                "STouch Org",
+                BluetoothHidDevice.SUBCLASS1_COMBO,
+                BluetoothHIDDescriptor.COMBO_DESCRIPTOR
+            )
+
+            val qosOut = BluetoothHidDeviceAppQosSettings(
+                BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
+                800,
+                9,
+                0,
+                11250,
+                BluetoothHidDeviceAppQosSettings.MAX
+            )
+
+            val success = hid.registerApp(sdpSettings, null, qosOut, { it.run() }, this)
+            Log.i(TAG, "hidDevice.registerApp called, success: $success")
+        } catch (e: Throwable) {
+            Log.e(TAG, "registerApp failed: ${e.message}")
         }
-
-        val sdpSettings = BluetoothHidDeviceAppSdpSettings(
-            "STouch",
-            "STouch Bluetooth Input Controller",
-            "STouch Org",
-            BluetoothHidDevice.SUBCLASS1_COMBO,
-            BluetoothHIDDescriptor.COMBO_DESCRIPTOR
-        )
-
-        val qosOut = BluetoothHidDeviceAppQosSettings(
-            BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
-            800,
-            9,
-            0,
-            11250,
-            BluetoothHidDeviceAppQosSettings.MAX
-        )
-
-        val success = hid.registerApp(sdpSettings, null, qosOut, { it.run() }, this)
-        Log.i(TAG, "hidDevice.registerApp called, success: $success")
     }
 
     fun unregisterApp() {
-        releaseAllInputs()
-        hidDevice?.unregisterApp()
-        isAppRegistered = false
+        try {
+            releaseAllInputs()
+            hidDevice?.unregisterApp()
+            isAppRegistered = false
+        } catch (e: Throwable) {
+            Log.e(TAG, "unregisterApp failed: ${e.message}")
+        }
     }
 
     fun getBondedHosts(): List<BluetoothDevice> {
-        return bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        return try {
+            bluetoothAdapter?.bondedDevices?.toList() ?: emptyList()
+        } catch (e: Throwable) {
+            Log.w(TAG, "getBondedHosts exception: ${e.message}")
+            emptyList()
+        }
     }
 
     fun connect(device: BluetoothDevice): Boolean {
-        val hid = hidDevice ?: return false
-        return hid.connect(device)
+        return try {
+            val hid = hidDevice ?: return false
+            hid.connect(device)
+        } catch (e: Throwable) {
+            Log.e(TAG, "connect failed: ${e.message}")
+            false
+        }
     }
 
     fun disconnect(): Boolean {
-        releaseAllInputs()
-        val host = connectedHost
-        val hid = hidDevice
-        if (host != null && hid != null) {
-            return hid.disconnect(host)
+        return try {
+            releaseAllInputs()
+            val host = connectedHost
+            val hid = hidDevice
+            if (host != null && hid != null) {
+                hid.disconnect(host)
+            } else {
+                true
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "disconnect failed: ${e.message}")
+            false
         }
-        return true
     }
 
     // --- Report Senders ---
