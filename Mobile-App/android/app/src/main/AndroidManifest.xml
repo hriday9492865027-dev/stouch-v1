@@ -29,7 +29,10 @@
 
     <!-- Foreground Service to keep app alive while controlling devices -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- FOREGROUND_SERVICE_CONNECTED_DEVICE only needed on API 34+, added conditionally -->
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"
+        android:minSdkVersion="34" />
     
     <!-- Wake lock to keep CPU running while Bluetooth HID reports are being sent -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -61,8 +64,7 @@
         <service
             android:name=".STouchForegroundService"
             android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="connectedDevice" />
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
