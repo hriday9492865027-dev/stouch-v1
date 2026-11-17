@@ -131,6 +131,10 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
   const handleRegisterApp = async () => {
     setLoading(true);
     try {
+      // Ensure bluetooth permissions are granted first
+      try {
+        await BluetoothHID.requestPermissions();
+      } catch {}
       await BluetoothHID.initialize();
       const res = await BluetoothHID.register();
       setIsRegistered(res.registered);
@@ -143,6 +147,9 @@ export const PCBluetoothScreen: React.FC<PCBluetoothScreenProps> = ({ onBack }) 
 
   const handleMakeDiscoverable = async () => {
     try {
+      try {
+        await BluetoothHID.requestPermissions();
+      } catch {}
       const res = await BluetoothHID.requestDiscoverability({ durationSeconds: 120 });
       if (res.success) {
         setDiscoverableSeconds(120);

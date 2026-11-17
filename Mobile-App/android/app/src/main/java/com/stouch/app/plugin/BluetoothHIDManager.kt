@@ -100,16 +100,10 @@ class BluetoothHIDManager(
                 BluetoothHIDDescriptor.COMBO_DESCRIPTOR
             )
 
-            val qosOut = BluetoothHidDeviceAppQosSettings(
-                BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
-                800,
-                9,
-                0,
-                11250,
-                BluetoothHidDeviceAppQosSettings.MAX
-            )
-
-            val success = hid.registerApp(sdpSettings, null, qosOut, { it.run() }, this)
+            // Pass null for QoS parameters to use default best-effort L2CAP parameters
+            // This prevents HAL crashes on Samsung Knox / MediaTek / Exynos firmware
+            val executor = androidx.core.content.ContextCompat.getMainExecutor(context)
+            val success = hid.registerApp(sdpSettings, null, null, executor, this)
             Log.i(TAG, "hidDevice.registerApp called, success: $success")
         } catch (e: Throwable) {
             Log.e(TAG, "registerApp failed: ${e.message}")
@@ -296,47 +290,72 @@ class BluetoothHIDManager(
     // --- BluetoothHidDevice.Callback ---
 
     override fun onAppStatusChanged(pluggedDevice: BluetoothDevice?, registered: Boolean) {
-        Log.i(TAG, "onAppStatusChanged: registered=$registered, device=${pluggedDevice?.address}")
-        isAppRegistered = registered
-        mainHandler.post {
-            listener.onRegistrationStateChanged(registered)
+        try {
+            Log.i(TAG, "onAppStatusChanged: registered=$registered")
+            isAppRegistered = registered
+            mainHandler.post {
+                try {
+                    listener.onRegistrationStateChanged(registered)
+                } catch (e: Throwable) {
+                    Log.e(TAG, "listener.onRegistrationStateChanged error: ${e.message}")
+                }
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "onAppStatusChanged error: ${e.message}")
         }
     }
 
     override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
-        Log.i(TAG, "onConnectionStateChanged: device=${device?.address}, state=$state")
-        when (state) {
-            BluetoothProfile.STATE_CONNECTED -> {
-                connectedHost = device
-            }
-            BluetoothProfile.STATE_DISCONNECTED -> {
-                if (connectedHost == device) {
-                    releaseAllInputs()
-                    connectedHost = null
+        try {
+            val devAddr = try { device?.address } catch (_: Throwable) { "unknown" }
+            Log.i(TAG, "onConnectionStateChanged: device=$devAddr, state=$state")
+            when (state) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    connectedHost = device
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    if (connectedHost == device) {
+                        releaseAllInputs()
+                        connectedHost = null
+                    }
                 }
             }
-        }
-        mainHandler.post {
-            listener.onConnectionStateChanged(device, state)
+            mainHandler.post {
+                try {
+                    listener.onConnectionStateChanged(device, state)
+                } catch (e: Throwable) {
+                    Log.e(TAG, "listener.onConnectionStateChanged error: ${e.message}")
+                }
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "onConnectionStateChanged error: ${e.message}")
         }
     }
 
     override fun onGetReport(device: BluetoothDevice?, type: Byte, id: Byte, bufferSize: Int) {
-        val hid = hidDevice ?: return
-        when (id) {
-            BluetoothHIDDescriptor.REPORT_ID_MOUSE -> {
-                hid.replyReport(device, type, id, mouseBuffer)
+        try {
+            val hid = hidDevice ?: return
+            when (id) {
+                BluetoothHIDDescriptor.REPORT_ID_MOUSE -> {
+                    hid.replyReport(device, type, id, mouseBuffer)
+                }
+                BluetoothHIDDescriptor.REPORT_ID_KEYBOARD -> {
+                    hid.replyReport(device, type, id, keyboardBuffer)
+                }
+                else -> {
+                    hid.reportError(device, BluetoothHidDevice.ERROR_RSP_UNSUPPORTED_REQ)
+                }
             }
-            BluetoothHIDDescriptor.REPORT_ID_KEYBOARD -> {
-                hid.replyReport(device, type, id, keyboardBuffer)
-            }
-            else -> {
-                hid.reportError(device, BluetoothHidDevice.ERROR_RSP_UNSUPPORTED_REQ)
-            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "onGetReport error: ${e.message}")
         }
     }
 
     override fun onSetReport(device: BluetoothDevice?, type: Byte, id: Byte, data: ByteArray?) {
-        hidDevice?.reportError(device, BluetoothHidDevice.ERROR_RSP_SUCCESS)
+        try {
+            hidDevice?.reportError(device, BluetoothHidDevice.ERROR_RSP_SUCCESS)
+        } catch (e: Throwable) {
+            Log.e(TAG, "onSetReport error: ${e.message}")
+        }
     }
 }

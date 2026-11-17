@@ -110,19 +110,28 @@ class BluetoothHIDPlugin : Plugin(), BluetoothHIDManager.HIDEventListener {
 
     @PluginMethod
     fun initialize(call: PluginCall) {
-        hidManager.initialize()
-        val ret = JSObject()
-        ret.put("success", true)
-        call.resolve(ret)
+        try {
+            hidManager.initialize()
+            val ret = JSObject()
+            ret.put("success", true)
+            call.resolve(ret)
+        } catch (e: Throwable) {
+            call.reject("Initialize failed: ${e.message}")
+        }
     }
 
+    @SuppressLint("MissingPermission")
     @PluginMethod
     fun register(call: PluginCall) {
-        hidManager.registerApp()
-        val ret = JSObject()
-        ret.put("success", true)
-        ret.put("registered", hidManager.isAppRegistered)
-        call.resolve(ret)
+        try {
+            hidManager.registerApp()
+            val ret = JSObject()
+            ret.put("success", true)
+            ret.put("registered", hidManager.isAppRegistered)
+            call.resolve(ret)
+        } catch (e: Throwable) {
+            call.reject("Register failed: ${e.message}")
+        }
     }
 
     @SuppressLint("MissingPermission")
