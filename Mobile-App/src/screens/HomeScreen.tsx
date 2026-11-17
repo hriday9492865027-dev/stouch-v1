@@ -12,6 +12,7 @@ import {
   Download,
   ArrowDownToLine
 } from 'lucide-react';
+import { PWAInstallBanner } from '../components/PWAInstallBanner';
 
 export type ScreenTarget = 
   | 'touchpad-deck'
@@ -45,6 +46,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ onSelectCategory }) => {
           </div>
         </div>
       </header>
+
+      {/* PWA Install Banner */}
+      <PWAInstallBanner />
 
       {/* Android APK Download Banner for Method 2 (Direct Bluetooth HID) */}
       <a
